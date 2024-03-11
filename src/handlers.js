@@ -1,9 +1,10 @@
-const loadNext = async (currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels) => {
+const loadNext = async (currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels, backendAvailable) => {
     setImageUrl(`http://localhost:3001/files/${files[currentIndex + 1]}`);
     console.log('Current file:', files[currentIndex + 1]);
     
     // if image is not labelled, get prediction
-    if (currentIndex >= (labels.length - 1) ) {
+    console.log('backendAvailable:', backendAvailable);
+    if (currentIndex >= (labels.length - 1) && backendAvailable) {
         console.log('Entered');
         const image_response = await fetch(`http://localhost:3001/files/${files[currentIndex + 1]}`);
         if (!image_response.ok) {
@@ -95,10 +96,10 @@ export const handleReject = (currentIndex, setSelectedButton, setLabels) => {
     }
 };
 
-export const handleCheck = async (currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl, setLabels, setFiles) => {
+export const handleCheck = async (currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl, setLabels, setFiles, backendAvailable) => {
     // After welcome message, simply move to the first image
     if (currentIndex === -1) {
-        loadNext(currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels);
+        loadNext(currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels, backendAvailable);
         setCurrentIndex(currentIndex + 1);
     }
     // 
@@ -123,7 +124,7 @@ export const handleCheck = async (currentIndex, setCurrentIndex, setSelectedButt
         
         // Move to next image if not at the end yet
         if (currentIndex < files.length - 1) {
-            loadNext(currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels);   
+            loadNext(currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels, backendAvailable);   
 
             // Update index if label is not REJECT. Otherwise, delete label and file
             if (labels[currentIndex] !== 'REJECT') {

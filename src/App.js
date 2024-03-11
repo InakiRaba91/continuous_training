@@ -17,6 +17,18 @@ function App() {
   const [selectedButton, setSelectedButton] = useState('');
   const [labels, setLabels] = useState([]);
   const [imageUrl, setImageUrl] = useState(welcomeImage);
+  const [backendAvailable, setBackendAvailable] = useState(false);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/health')
+      .then(response => {
+        setBackendAvailable(response.status === 200);
+      })
+      .catch(error => {
+        console.error('Prediction Backend not available');
+        setBackendAvailable(false);
+      });
+  }, []); // Empty dependency array means this effect runs once on mount and not on updates
 
   useEffect(() => {
     fetch('http://localhost:3001/filelist')
@@ -29,7 +41,7 @@ function App() {
   const dogClickHandler = useCallback(() => handleDog(currentIndex, setSelectedButton, setLabels), [currentIndex, setSelectedButton, setLabels]);
   const catClickHandler = useCallback(() => handleCat(currentIndex, setSelectedButton, setLabels), [currentIndex, setSelectedButton, setLabels]);
   const rejectClickHandler = useCallback(() => handleReject(currentIndex, setSelectedButton, setLabels), [currentIndex, setSelectedButton, setLabels]);
-  const checkClickHandler = useCallback(() => handleCheck(currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl, setLabels, setFiles), [currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl, setLabels, setFiles]);
+  const checkClickHandler = useCallback(() => handleCheck(currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl, setLabels, setFiles, backendAvailable), [currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl, setLabels, setFiles, backendAvailable]);
   
   useEffect(() => {
     const handleKeyDown = (event) => {
