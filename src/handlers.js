@@ -1,12 +1,58 @@
+const loadNext = async (currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels) => {
+    setImageUrl(`http://localhost:3001/files/${files[currentIndex + 1]}`);
+    console.log('Current file:', files[currentIndex + 1]);
+    
+    // if image is not labelled, get prediction
+    if (currentIndex >= (labels.length - 1) ) {
+        console.log('Entered');
+        const image_response = await fetch(`http://localhost:3001/files/${files[currentIndex + 1]}`);
+        if (!image_response.ok) {
+            throw new Error('Failed to retrieve image');
+        }
+        const blob = await image_response.blob(); // get blob data
+        const base64StrWithPrefix = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result); // resolve promise with base64 string on load end
+            reader.onerror = reject; // reject promise on error
+            reader.readAsDataURL(blob); // read blob data as base64
+        });
+        // Remove prefix "data:image/png;base64,"
+        const base64Str = base64StrWithPrefix.split(",")[1];
+        // const data = JSON.stringify(base64Str);
+        const data = JSON.stringify({ base_64_str: base64Str });
+        const pred_response = await fetch("http://localhost:8000/predict", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: data
+        });
+        if (!pred_response.ok) {
+            throw new Error('Failed to retrieve prediction');
+        }
+        const prediction = await pred_response.json();
+        console.log('Model prediction:', prediction.animal);
+
+        // set prediction as labelled
+        setSelectedButton(prediction.animal);
+        setLabels(prevLabels => {
+            const newLabels = [...prevLabels];
+            newLabels[currentIndex+1] = prediction.animal;
+            console.log('Updated labels:', newLabels);
+            return newLabels;
+        });
+    }
+}
+
 // Event handlers for your buttons can be defined here
 export const handleBack = (currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl) => {
     if (currentIndex === 0) {
         alert("This is the first element to review");
     } else if (currentIndex > 0) {
-        setCurrentIndex(currentIndex - 1);
         setSelectedButton(labels[currentIndex - 1]);
         setImageUrl(`http://localhost:3001/files/${files[currentIndex - 1]}`);    
         console.log('Current file:', files[currentIndex - 1]);
+        setCurrentIndex(currentIndex - 1);
     }
 };
 
@@ -52,9 +98,8 @@ export const handleReject = (currentIndex, setSelectedButton, setLabels) => {
 export const handleCheck = async (currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl, setLabels, setFiles) => {
     // After welcome message, simply move to the first image
     if (currentIndex === -1) {
+        loadNext(currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels);
         setCurrentIndex(currentIndex + 1);
-        setImageUrl(`http://localhost:3001/files/${files[currentIndex + 1]}`);
-        console.log('Current file:', files[currentIndex + 1]);
     }
     // 
     else if (currentIndex < labels.length && labels[currentIndex]) {
@@ -78,13 +123,12 @@ export const handleCheck = async (currentIndex, setCurrentIndex, setSelectedButt
         
         // Move to next image if not at the end yet
         if (currentIndex < files.length - 1) {
-            setImageUrl(`http://localhost:3001/files/${files[currentIndex + 1]}`);
-            console.log('Current file:', files[currentIndex + 1]);
+            loadNext(currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels);   
 
             // Update index if label is not REJECT. Otherwise, delete label and file
             if (labels[currentIndex] !== 'REJECT') {
-                setCurrentIndex(currentIndex + 1);
                 setSelectedButton(labels[currentIndex + 1]);
+                setCurrentIndex(currentIndex + 1);
             } 
             else {
                 // Remove the label and file from their respective lists
