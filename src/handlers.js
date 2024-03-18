@@ -1,4 +1,4 @@
-const loadNext = async (currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels, backendAvailable) => {
+const loadNext = async (currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels, setPreds, backendAvailable) => {
     setImageUrl(`http://localhost:3001/files/${files[currentIndex + 1]}`);
     console.log('Current file:', files[currentIndex + 1]);
     
@@ -32,7 +32,7 @@ const loadNext = async (currentIndex, files, setImageUrl, labels, setSelectedBut
             throw new Error('Failed to retrieve prediction');
         }
         const prediction = await pred_response.json();
-        console.log('Model prediction:', prediction.animal);
+        console.log('Model prediction:', prediction.animal, prediction.score, prediction.version);
 
         // set prediction as labelled
         setSelectedButton(prediction.animal);
@@ -41,6 +41,14 @@ const loadNext = async (currentIndex, files, setImageUrl, labels, setSelectedBut
             newLabels[currentIndex+1] = prediction.animal;
             console.log('Updated labels:', newLabels);
             return newLabels;
+        });
+
+        // store prediction
+        setPreds(prevPreds => {
+            const newPreds = [...prevPreds];
+            newPreds[currentIndex+1] = prediction;
+            console.log('Updated predictions:', newPreds);
+            return newPreds;
         });
     }
 }
@@ -96,10 +104,10 @@ export const handleReject = (currentIndex, setSelectedButton, setLabels) => {
     }
 };
 
-export const handleCheck = async (currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl, setLabels, setFiles, backendAvailable) => {
+export const handleCheck = async (currentIndex, setCurrentIndex, setSelectedButton, labels, preds, files, setImageUrl, setLabels, setPreds, setFiles, backendAvailable) => {
     // After welcome message, simply move to the first image
     if (currentIndex === -1) {
-        loadNext(currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels, backendAvailable);
+        loadNext(currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels, setPreds, backendAvailable);
         setCurrentIndex(currentIndex + 1);
     }
     // 
@@ -112,19 +120,31 @@ export const handleCheck = async (currentIndex, setCurrentIndex, setSelectedButt
             }
         }
         // submit the label to the backend
+        let bodyObject = { 
+            label: labels[currentIndex],
+            filename: files[currentIndex],
+            score: null, 
+            version: null 
+        };
+
+        // if label and pred are different, append to bodyObject extra properties
+        if (labels[currentIndex] !== preds[currentIndex].animal) {
+            bodyObject.score = preds[currentIndex].score;
+            bodyObject.version = preds[currentIndex].version;
+        }
         const response = await fetch('http://localhost:3001/label', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ label: labels[currentIndex], filename: files[currentIndex] }),
+            body: JSON.stringify(bodyObject),
         });
         const data = await response.json();
         console.log('Submit label response:', data);
         
         // Move to next image if not at the end yet
         if (currentIndex < files.length - 1) {
-            loadNext(currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels, backendAvailable);   
+            loadNext(currentIndex, files, setImageUrl, labels, setSelectedButton, setLabels, setPreds, backendAvailable);   
 
             // Update index if label is not REJECT. Otherwise, delete label and file
             if (labels[currentIndex] !== 'REJECT') {

@@ -16,6 +16,7 @@ function App() {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [selectedButton, setSelectedButton] = useState('');
   const [labels, setLabels] = useState([]);
+  const [preds, setPreds] = useState([]);
   const [imageUrl, setImageUrl] = useState(welcomeImage);
   const [backendAvailable, setBackendAvailable] = useState(false);
 
@@ -41,7 +42,7 @@ function App() {
   const dogClickHandler = useCallback(() => handleDog(currentIndex, setSelectedButton, setLabels), [currentIndex, setSelectedButton, setLabels]);
   const catClickHandler = useCallback(() => handleCat(currentIndex, setSelectedButton, setLabels), [currentIndex, setSelectedButton, setLabels]);
   const rejectClickHandler = useCallback(() => handleReject(currentIndex, setSelectedButton, setLabels), [currentIndex, setSelectedButton, setLabels]);
-  const checkClickHandler = useCallback(() => handleCheck(currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl, setLabels, setFiles, backendAvailable), [currentIndex, setCurrentIndex, setSelectedButton, labels, files, setImageUrl, setLabels, setFiles, backendAvailable]);
+  const checkClickHandler = useCallback(() => handleCheck(currentIndex, setCurrentIndex, setSelectedButton, labels, preds, files, setImageUrl, setLabels, setPreds, setFiles, backendAvailable), [currentIndex, setCurrentIndex, setSelectedButton, labels, preds, files, setImageUrl, setLabels, setPreds, setFiles, backendAvailable]);
   
   useEffect(() => {
     const handleKeyDown = (event) => {
