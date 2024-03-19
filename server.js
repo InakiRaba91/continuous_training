@@ -42,10 +42,13 @@ app.get('/filelist', (req, res) => {
 app.post('/label', (req, res) => {
   const { label, filename, score, version } = req.body;
   const filenameNoExt = path.parse(filename).name;
+
+  // if version is null, set a variable named source to 'manual
+  const source = version ? 'auto' : 'manual';
   
   // Store the label in a JSON file
   if (label !== 'REJECT') {
-    fs.writeFile(`./data/annotations/${filenameNoExt}.json`, JSON.stringify({ label, score, version }), (err) => {
+    fs.writeFile(`./data/annotations/${filenameNoExt}.json`, JSON.stringify({ label, source, score, version }), (err) => {
       if (err) {
         console.log('Error writing file:', err);
         return res.status(500).send('Error writing file: ' + err);

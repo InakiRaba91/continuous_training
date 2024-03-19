@@ -127,8 +127,8 @@ export const handleCheck = async (currentIndex, setCurrentIndex, setSelectedButt
             version: null 
         };
 
-        // if label and pred are different, append to bodyObject extra properties
-        if (labels[currentIndex] !== preds[currentIndex].animal) {
+        // if label and pred are equal, store version and score
+        if (labels[currentIndex] === preds[currentIndex].animal) {
             bodyObject.score = preds[currentIndex].score;
             bodyObject.version = preds[currentIndex].version;
         }
